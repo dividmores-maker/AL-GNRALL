@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المالية ودفع الاشتراكات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-base:       #080808;
+            --gold:          #d4a017;
+            --gold-hi:       #f5c842;
+            --gold-soft:     #e8c96a;
+            --crimson:       #c0182a;
+            --crimson-hi:    #e8203a;
+            --crimson-soft:  #ff6070;
+            --white:         #ffffff;
+            --glass-bg:      rgba(10,6,0,0.45);
+            --glass-border:  rgba(212,160,23,0.22);
+            --card-bg:       rgba(10,6,0,0.65);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-base);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* ── Background ────────────────────────────────── */
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bg-gradient {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 75% 55% at 50% -5%,  rgba(212,160,23,.38) 0%, transparent 62%),
+                radial-gradient(ellipse 55% 45% at 85% 85%,  rgba(192,24,42,.28)  0%, transparent 55%),
+                radial-gradient(ellipse 45% 38% at 15% 75%,  rgba(212,160,23,.16) 0%, transparent 50%),
+                linear-gradient(160deg, #0d0900 0%, #110a00 40%, #080808 70%, #0d0203 100%);
+        }
+        .grid-lines {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(212,160,23,.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212,160,23,.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        .dot-grid {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(212,160,23,.13) 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: floatOrb 8s ease-in-out infinite;
+        }
+        .orb-1 { width:420px; height:420px; background:rgba(212,160,23,.22); top:-110px; left:50%; transform:translateX(-50%); }
+        .orb-2 { width:300px; height:300px; background:rgba(192,24,42,.2);   bottom:10%; right:-50px; animation-delay:-3s; }
+        .orb-3 { width:250px; height:250px; background:rgba(212,160,23,.12); bottom:20%; left:-30px; animation-delay:-5s; }
+        @keyframes floatOrb {
+            0%,100% { transform:translateY(0) translateX(0); }
+            33%     { transform:translateY(-20px) translateX(10px); }
+            66%     { transform:translateY(10px)  translateX(-10px); }
+        }
+
+        /* Particles */
+        .particles { position:fixed; inset:0; z-index:1; pointer-events:none; }
+        .particle  {
+            position:absolute; width:3px; height:3px; border-radius:50%;
+            background:var(--gold-soft); animation:floatParticle linear infinite; opacity:0;
+        }
+        @keyframes floatParticle {
+            0%   { transform:translateY(100vh) translateX(0); opacity:0; }
+            10%  { opacity:.5; }
+            90%  { opacity:.3; }
+            100% { transform:translateY(-10vh) translateX(30px); opacity:0; }
+        }
+
+        /* ── Layout ───────────────────────────────────── */
+        .page-wrapper {
+            position: relative;
+            z-index: 10;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ───────────────────────────────────── */
+        .header {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            padding: 24px 28px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+            margin-bottom: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold-hi), var(--gold-soft), var(--crimson-soft));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 12px rgba(212,160,23,.5));
+        }
+        .header p { color: rgba(255,255,255,.45); margin-top: 4px; font-size: 13px; }
+
+        /* ── Buttons ──────────────────────────────────── */
+        .btn {
+            background: linear-gradient(135deg, var(--crimson), var(--gold));
+            color: white;
+            padding: 11px 22px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s ease;
+            box-shadow: 0 4px 16px rgba(192,24,42,.4);
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(212,160,23,.6); }
+
+        .btn-warning  { background: linear-gradient(135deg,#f59e0b,#d97706); box-shadow:0 4px 16px rgba(245,158,11,.4); }
+        .btn-success  { background: linear-gradient(135deg,#10b981,#059669); box-shadow:0 4px 16px rgba(16,185,129,.4); }
+        .btn-secondary{ background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); box-shadow:none; }
+        .btn-secondary:hover { background:rgba(255,255,255,.12); box-shadow:none; }
+        .btn-whatsapp { background: linear-gradient(135deg,#25d366,#1ebe5d); box-shadow:0 4px 16px rgba(37,211,102,.4); }
+        .btn-whatsapp:hover { box-shadow:0 6px 22px rgba(37,211,102,.6); }
+
+        /* ── Stats ────────────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .stat-box {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            padding: 22px 18px;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,.3);
+            transition: transform .25s;
+        }
+        .stat-box:hover { transform: translateY(-3px); }
+        .stat-box .number {
+            font-size: 30px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold-hi), var(--gold-soft));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-box.success .number { background: linear-gradient(135deg,#34d399,#10b981); -webkit-background-clip:text; background-clip:text; }
+        .stat-box.warning .number { background: linear-gradient(135deg,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; }
+        .stat-box.danger  .number { background: linear-gradient(135deg,#f87171,#ef4444); -webkit-background-clip:text; background-clip:text; }
+        .stat-box .label { color: rgba(255,255,255,.5); margin-top: 6px; font-size: 12px; font-weight: 600; }
+
+        /* ── Firebase bar ─────────────────────────────── */
+        .firebase-bar {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 18px; border-radius: 12px;
+            margin-bottom: 18px; font-size: 13px; font-weight: 700;
+            transition: all .3s; backdrop-filter: blur(10px);
+        }
+        .firebase-bar.connected  { background:rgba(16,185,129,.12);  color:#34d399; border:1px solid rgba(16,185,129,.3); }
+        .firebase-bar.error      { background:rgba(239,68,68,.12);   color:#f87171; border:1px solid rgba(239,68,68,.3); }
+        .firebase-bar.connecting { background:rgba(245,158,11,.1);   color:#fbbf24; border:1px solid rgba(245,158,11,.3); }
+        .firebase-bar.saving     { background:rgba(59,130,246,.12);  color:#60a5fa; border:1px solid rgba(59,130,246,.3); }
+        .firebase-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .firebase-dot.connected  { background:#34d399; box-shadow:0 0 8px #34d399; animation:fbBlink 2s infinite; }
+        .firebase-dot.error      { background:#f87171; }
+        .firebase-dot.connecting { background:#fbbf24; animation:fbBlink .6s infinite; }
+        .firebase-dot.saving     { background:#60a5fa; animation:fbBlink .4s infinite; }
+        @keyframes fbBlink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        /* ── Students container ───────────────────────── */
+        .students-container {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px);
+            padding: 26px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.35);
+        }
+        .students-container h2 {
+            color: var(--white);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* ── Search ───────────────────────────────────── */
+        .search-box { margin-bottom: 18px; }
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--white);
+            outline: none;
+            transition: border-color .3s, box-shadow .3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,.35); }
+        .search-box input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(212,160,23,.15);
+        }
+
+        /* ── Table ────────────────────────────────────── */
+        .students-table { width: 100%; border-collapse: collapse; }
+        .students-table thead {
+            background: linear-gradient(135deg, rgba(192,24,42,.5), rgba(212,160,23,.3));
+        }
+        .students-table th, .students-table td {
+            padding: 14px 16px;
+            text-align: right;
+            border-bottom: 1px solid rgba(212,160,23,.1);
+            font-size: 14px;
+            color: rgba(255,255,255,.85);
+        }
+        .students-table th { font-weight: 700; color: var(--gold-soft); font-size: 13px; }
+        .students-table tbody tr:hover { background: rgba(212,160,23,.06); }
+
+        /* ── Badges ───────────────────────────────────── */
+        .status-badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .status-badge.paid    { background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.3); }
+        .status-badge.pending { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.3); }
+        .status-badge.overdue { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.3); }
+
+        /* ── Action buttons ───────────────────────────── */
+        .action-btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            transition: all .25s;
+            margin-bottom: 4px;
+        }
+        .action-btn.pay     { background:rgba(16,185,129,.2); color:#34d399; border:1px solid rgba(16,185,129,.3); }
+        .action-btn.pay:hover { background:rgba(16,185,129,.35); }
+        .action-btn.view    { background:rgba(212,160,23,.15); color:var(--gold-soft); border:1px solid rgba(212,160,23,.3); margin-left:5px; }
+        .action-btn.view:hover { background:rgba(212,160,23,.28); }
+        .action-btn.message { background:rgba(37,211,102,.15); color:#4ade80; border:1px solid rgba(37,211,102,.3); margin-left:5px; }
+        .action-btn.message:hover { background:rgba(37,211,102,.3); }
+
+        /* ── Modals ───────────────────────────────────── */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,.75);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(160deg, #0d0900, #080808);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 18px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(212,160,23,.12);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(212,160,23,.2);
+        }
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gold-hi), var(--gold-soft));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .close-btn {
+            background: none; border: none;
+            font-size: 26px; cursor: pointer;
+            color: rgba(255,255,255,.4);
+            transition: color .2s;
+            line-height: 1;
+        }
+        .close-btn:hover { color: var(--white); }
+
+        /* ── Form elements ────────────────────────────── */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            color: rgba(255,255,255,.7);
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(212,160,23,.2);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--white);
+            outline: none;
+            transition: border-color .3s, box-shadow .3s;
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: rgba(255,255,255,.3); }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(212,160,23,.15);
+        }
+        .form-group select option { background: #0d0900; color: var(--white); }
+
+        /* ── Payment summary ──────────────────────────── */
+        .payment-summary {
+            background: rgba(212,160,23,.06);
+            border: 1px solid rgba(212,160,23,.15);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .payment-summary .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            color: rgba(255,255,255,.75);
+            font-size: 14px;
+        }
+        .payment-summary .item:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--gold-soft);
+        }
+
+        /* ── Payment history ──────────────────────────── */
+        .payment-history { margin-top: 20px; }
+        .payment-item {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(212,160,23,.12);
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-right: 3px solid #10b981;
+            color: rgba(255,255,255,.75);
+            font-size: 13px;
+        }
+        .payment-item .date { color: rgba(255,255,255,.35); font-size: 11px; margin-top: 6px; }
+
+        /* ── Alert ────────────────────────────────────── */
+        .alert {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-weight: 700;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+        .alert-success { background:rgba(16,185,129,.12); color:#34d399; border:1px solid rgba(16,185,129,.3); }
+        .alert-danger  { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.3); }
+
+        /* ── Message preview ──────────────────────────── */
+        .msg-preview {
+            background: rgba(16,185,129,.08);
+            border: 1px solid rgba(16,185,129,.2);
+            border-radius: 14px;
+            padding: 18px;
+            font-size: 14px;
+            line-height: 2;
+            white-space: pre-wrap;
+            color: #a7f3d0;
+            margin-bottom: 20px;
+            direction: rtl;
+            position: relative;
+        }
+        .msg-preview::before {
+            content: '💬';
+            position: absolute;
+            top: -12px; right: 15px;
+            font-size: 20px;
+            background: #0d0900;
+            padding: 0 6px;
+            border-radius: 50%;
+        }
+        .phone-row { display:flex; gap:10px; align-items:flex-end; }
+        .phone-row input { flex: 1; }
+
+        /* ── Scrollbar ────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(212,160,23,.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(212,160,23,.7); }
+    </style>
+</head>
+<body>
+
+    <!-- Background -->
+    <div class="bg-layer">
+        <div class="bg-gradient"></div>
+        <div class="dot-grid"></div>
+        <div class="grid-lines"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+
+    <div class="page-wrapper">
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>💰 المالية ودفع الاشتراكات</h1>
+                <p>إدارة المدفوعات والاشتراكات</p>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <a href="index.html" class="btn btn-warning">🏠 الرئيسية</a>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Firebase Status Bar -->
+        <div class="firebase-bar connecting" id="firebaseStatusBar">
+            <div class="firebase-dot connecting" id="firebaseDot"></div>
+            <span id="firebaseMsg">🔌 جاري الاتصال بـ Firebase...</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-box success">
+                <div class="number" id="totalRevenue">0</div>
+                <div class="label">إجمالي الإيرادات (جنيه)</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalStudents">0</div>
+                <div class="label">إجمالي الطلاب</div>
+            </div>
+            <div class="stat-box success">
+                <div class="number" id="paidStudents">0</div>
+                <div class="label">طالب مدفوع</div>
+            </div>
+            <div class="stat-box warning">
+                <div class="number" id="pendingStudents">0</div>
+                <div class="label">في انتظار الدفع</div>
+            </div>
+            <div class="stat-box danger">
+                <div class="number" id="overdueStudents">0</div>
+                <div class="label">متأخرين</div>
+            </div>
+        </div>
+
+        <!-- Students List -->
+        <div class="students-container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2>📋 قائمة الطلاب والاشتراكات</h2>
+                <button class="btn" onclick="showSetPricesModal()">💰 تحديد أسعار الاشتراكات</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 البحث عن طالب..." onkeyup="filterStudents()">
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="students-table">
+                    <thead>
+                        <tr>
+                            <th>اسم الطالب</th>
+                            <th>الفصل</th>
+                            <th>سعر الاشتراك</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /page-wrapper -->
+
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💰 تسجيل دفعة</h2>
+                <button class="close-btn" onclick="closeModal('paymentModal')">&times;</button>
+            </div>
+            <div class="payment-summary">
+                <div class="item"><span>اسم الطالب:</span><span id="paymentStudentName">-</span></div>
+                <div class="item"><span>الفصل:</span><span id="paymentStudentClass">-</span></div>
+                <div class="item"><span>سعر الاشتراك:</span><span id="paymentSubscriptionPrice">0 جنيه</span></div>
+                <div class="item"><span>المدفوع سابقاً:</span><span id="paymentPaidAmount">0 جنيه</span></div>
+                <div class="item"><span>المتبقي:</span><span id="paymentRemainingAmount">0 جنيه</span></div>
+            </div>
+            <form onsubmit="processPayment(event)">
+                <input type="hidden" id="paymentStudentId">
+                <div class="form-group">
+                    <label>المبلغ المدفوع</label>
+                    <input type="number" id="paymentAmount" placeholder="أدخل المبلغ" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>طريقة الدفع</label>
+                    <select id="paymentMethod" required>
+                        <option value="">اختر طريقة الدفع</option>
+                        <option value="cash">نقدي</option>
+                        <option value="card">بطاقة</option>
+                        <option value="transfer">تحويل بنكي</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ملاحظات</label>
+                    <textarea id="paymentNotes" placeholder="ملاحظات إضافية (اختياري)" rows="3"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button type="submit" class="btn btn-success" style="flex:1;">✓ تأكيد الدفع</button>
+                    <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeModal('paymentModal')">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 تفاصيل الطالب</h2>
+                <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+            </div>
+            <div id="studentDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Set Prices Modal -->
+    <div class="modal" id="setPricesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💰 تحديد أسعار الاشتراكات</h2>
+                <button class="close-btn" onclick="closeModal('setPricesModal')">&times;</button>
+            </div>
+            <div style="margin-bottom:20px;">
+                <div class="form-group">
+                    <label>تطبيق سعر موحد على الجميع (اختياري)</label>
+                    <div style="display:flex;gap:10px;">
+                        <input type="number" id="bulkPrice" placeholder="أدخل السعر الموحد" min="0">
+                        <button class="btn btn-success" onclick="applyBulkPrice()">✓ تطبيق</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pricesList"></div>
+            <div style="margin-top:20px;">
+                <button class="btn btn-success" style="width:100%;" onclick="savePrices()">✓ حفظ الأسعار</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Message to Parent Modal -->
+    <div class="modal" id="messageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📱 إرسال رسالة لولي الأمر</h2>
+                <button class="close-btn" onclick="closeModal('messageModal')">&times;</button>
+            </div>
+            <div class="msg-preview" id="messagePreview"></div>
+            <div class="form-group">
+                <label>✏️ تعديل الرسالة (اختياري)</label>
+                <textarea id="messageText" rows="7" style="font-size:14px;line-height:1.8;direction:rtl;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>📞 رقم هاتف ولي الأمر</label>
+                <div class="phone-row">
+                    <input type="tel" id="parentPhone" placeholder="مثال: 01012345678" dir="ltr">
+                    <button class="btn btn-whatsapp" onclick="sendWhatsApp()">📲 واتساب</button>
+                </div>
+                <small style="color:rgba(255,255,255,.35);margin-top:6px;display:block;">اتركه فارغ لفتح واتساب بدون رقم محدد</small>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <button class="btn" style="flex:1;" onclick="copyMessage()">📋 نسخ الرسالة</button>
+                <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('messageModal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Floating particles
+        const particlesEl = document.getElementById('particles');
+        for (let i = 0; i < 25; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDuration = (6 + Math.random() * 10) + 's';
+            p.style.animationDelay = (Math.random() * 10) + 's';
+            p.style.width = p.style.height = (1 + Math.random() * 3) + 'px';
+            const colors = ['#f5c842','#e8c96a','#d4a017','#e8203a','#ff6070','#c0182a'];
+            p.style.background = colors[Math.floor(Math.random() * colors.length)];
+            particlesEl.appendChild(p);
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyAhBzD1tqxDhqpCklLUXh2LxHTI-lZgPbg",
+  authDomain: "al-gnarl.firebaseapp.com",
+  projectId: "al-gnarl",
+  storageBucket: "al-gnarl.firebasestorage.app",
+  messagingSenderId: "288765966471",
+  appId: "1:288765966471:web:63358febfb82843c2fa022"
+};
+        const app = initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+
+        const DEFAULT_PRICE = 500;
+
+        function setFbStatus(state, msg) {
+            const bar = document.getElementById('firebaseStatusBar');
+            const dot = document.getElementById('firebaseDot');
+            const txt = document.getElementById('firebaseMsg');
+            if (!bar) return;
+            bar.className = 'firebase-bar ' + state;
+            dot.className = 'firebase-dot ' + state;
+            txt.textContent = msg;
+        }
+
+        let students           = [];
+        let paymentsData       = {};
+        let attendanceSessions = [];
+
+        async function savePayments() {
+            setFbStatus('saving', '💾 جاري الحفظ على Firebase...');
+            try {
+                await setDoc(doc(db, 'finance', 'payments'), { data: paymentsData });
+                setFbStatus('connected', '🔥 Firebase — تم الحفظ ✔');
+            } catch(e) {
+                setFbStatus('error', '❌ خطأ في الحفظ — ' + e.message);
+            }
+        }
+
+        function buildStudentsList() {
+            const map = new Map();
+            attendanceSessions.forEach(session => {
+                (session.students || []).forEach(s => {
+                    if (!map.has(s.id)) {
+                        const pd = paymentsData[s.id] || {};
+                        map.set(s.id, {
+                            id: s.id,
+                            name: s.name,
+                            class: session.class,
+                            subscriptionPrice: pd.subscriptionPrice ?? DEFAULT_PRICE,
+                            paid: pd.paid || 0,
+                            paymentHistory: pd.history || []
+                        });
+                    }
+                });
+            });
+            students = Array.from(map.values());
+        }
+
+        async function migrateIfNeeded() {
+            const localPayments = localStorage.getItem('studentPayments');
+            const localPrices   = localStorage.getItem('subscriptionPrices');
+            if (!localPayments && !localPrices) return;
+            try {
+                const snap = await getDoc(doc(db, 'finance', 'payments'));
+                if (!snap.exists()) {
+                    const payments = localPayments ? JSON.parse(localPayments) : {};
+                    const prices   = localPrices   ? JSON.parse(localPrices)   : {};
+                    const merged   = {};
+                    new Set([...Object.keys(payments), ...Object.keys(prices)]).forEach(id => {
+                        merged[id] = {
+                            paid: payments[id]?.paid || 0,
+                            history: payments[id]?.history || [],
+                            subscriptionPrice: prices[id] || DEFAULT_PRICE
+                        };
+                    });
+                    await setDoc(doc(db, 'finance', 'payments'), { data: merged });
+                }
+                localStorage.removeItem('studentPayments');
+                localStorage.removeItem('subscriptionPrices');
+            } catch(e) { console.warn('Migration error:', e); }
+        }
+
+        function startListeners() {
+            onSnapshot(doc(db, 'dashboard', 'attendanceSessions'), snap => {
+                attendanceSessions = snap.exists() ? (snap.data().data || []) : [];
+                buildStudentsList();
+                renderStudents();
+                setFbStatus('connected', '🔥 Firebase متصل — البيانات محدّثة لحظياً');
+            }, err => {
+                console.error(err);
+                setFbStatus('error', '❌ خطأ في الاتصال — تأكد من Firebase Rules');
+            });
+
+            onSnapshot(doc(db, 'finance', 'payments'), snap => {
+                paymentsData = snap.exists() ? (snap.data().data || {}) : {};
+                buildStudentsList();
+                renderStudents();
+            }, err => console.error('Payments listener:', err));
+        }
+
+        function showAlert(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `alert alert-${type}`;
+            div.textContent = message;
+            const c = document.getElementById('alertContainer');
+            c.innerHTML = '';
+            c.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        function getPaymentStatus(s) {
+            const r = s.subscriptionPrice - s.paid;
+            if (r <= 0) return 'paid';
+            if (s.paid > 0) return 'pending';
+            return 'overdue';
+        }
+
+        function updateStats() {
+            const total   = students.reduce((sum, s) => sum + s.paid, 0);
+            const paid    = students.filter(s => s.paid >= s.subscriptionPrice).length;
+            const pending = students.filter(s => s.paid > 0 && s.paid < s.subscriptionPrice).length;
+            const overdue = students.filter(s => s.paid === 0).length;
+            document.getElementById('totalRevenue').textContent    = total.toLocaleString();
+            document.getElementById('totalStudents').textContent   = students.length;
+            document.getElementById('paidStudents').textContent    = paid;
+            document.getElementById('pendingStudents').textContent = pending;
+            document.getElementById('overdueStudents').textContent = overdue;
+        }
+
+        function renderStudents() {
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+            if (students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:rgba(255,255,255,.4);">
+                    <p style="font-size:18px;margin-bottom:10px;">👥 لا يوجد طلاب مسجلين</p>
+                    <p>يرجى إضافة طلاب في صفحة الحضور والغياب أولاً</p></td></tr>`;
+                updateStats(); return;
+            }
+            students.forEach(s => {
+                const rem    = s.subscriptionPrice - s.paid;
+                const status = getPaymentStatus(s);
+                const stText = status === 'paid' ? 'مدفوع' : status === 'pending' ? 'جزئي' : 'لم يدفع';
+                const row    = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${s.name}</td>
+                    <td>${s.class}</td>
+                    <td>${s.subscriptionPrice} جنيه</td>
+                    <td>${s.paid} جنيه</td>
+                    <td>${rem > 0 ? rem : 0} جنيه</td>
+                    <td><span class="status-badge ${status}">${stText}</span></td>
+                    <td>
+                        ${rem > 0 ? `<button class="action-btn pay" onclick="showPaymentModal(${s.id})">💰 دفع</button>` : ''}
+                        <button class="action-btn view" onclick="showStudentDetails(${s.id})">👁️ عرض</button>
+                        <button class="action-btn message" onclick="showMessageModal(${s.id})">📱 رسالة</button>
+                    </td>`;
+                tbody.appendChild(row);
+            });
+            updateStats();
+        }
+
+        function filterStudents() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#studentsTableBody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        function showPaymentModal(studentId) {
+            const s = students.find(x => x.id === studentId);
+            if (!s) return;
+            const rem = s.subscriptionPrice - s.paid;
+            document.getElementById('paymentStudentId').value               = s.id;
+            document.getElementById('paymentStudentName').textContent       = s.name;
+            document.getElementById('paymentStudentClass').textContent      = s.class;
+            document.getElementById('paymentSubscriptionPrice').textContent = s.subscriptionPrice + ' جنيه';
+            document.getElementById('paymentPaidAmount').textContent        = s.paid + ' جنيه';
+            document.getElementById('paymentRemainingAmount').textContent   = rem + ' جنيه';
+            document.getElementById('paymentAmount').value = rem;
+            document.getElementById('paymentAmount').max   = rem;
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function processPayment(e) {
+            e.preventDefault();
+            const id     = parseInt(document.getElementById('paymentStudentId').value);
+            const amount = parseInt(document.getElementById('paymentAmount').value);
+            const method = document.getElementById('paymentMethod').value;
+            const notes  = document.getElementById('paymentNotes').value;
+            const s      = students.find(x => x.id === id);
+            if (!s) return;
+            if (amount > (s.subscriptionPrice - s.paid)) {
+                showAlert('المبلغ المدفوع أكبر من المتبقي!', 'danger'); return;
+            }
+            if (!paymentsData[id]) paymentsData[id] = { paid: 0, history: [], subscriptionPrice: s.subscriptionPrice };
+            paymentsData[id].paid = (paymentsData[id].paid || 0) + amount;
+            paymentsData[id].history.push({ date: new Date().toISOString(), amount, method, notes });
+            savePayments();
+            showAlert(`تم تسجيل دفعة بمبلغ ${amount} جنيه بنجاح! ✓`);
+            closeModal('paymentModal');
+            buildStudentsList();
+            renderStudents();
+        }
+
+        function showStudentDetails(studentId) {
+            const s = students.find(x => x.id === studentId);
+            if (!s) return;
+            const rem = s.subscriptionPrice - s.paid;
+            let content = `
+                <div class="payment-summary">
+                    <div class="item"><span>اسم الطالب:</span><span>${s.name}</span></div>
+                    <div class="item"><span>الفصل:</span><span>${s.class}</span></div>
+                    <div class="item"><span>سعر الاشتراك:</span><span>${s.subscriptionPrice} جنيه</span></div>
+                    <div class="item"><span>المدفوع:</span><span>${s.paid} جنيه</span></div>
+                    <div class="item"><span>المتبقي:</span><span>${rem > 0 ? rem : 0} جنيه</span></div>
+                </div>
+                <div class="payment-history">
+                    <h3 style="color:var(--gold-soft);margin-bottom:15px;">💳 سجل الدفعات</h3>`;
+            if (s.paymentHistory && s.paymentHistory.length > 0) {
+                s.paymentHistory.forEach(p => {
+                    const date = new Date(p.date).toLocaleDateString('ar-EG');
+                    const mt   = p.method === 'cash' ? 'نقدي' : p.method === 'card' ? 'بطاقة' : 'تحويل بنكي';
+                    content += `<div class="payment-item">
+                        <div><strong>المبلغ:</strong> ${p.amount} جنيه</div>
+                        <div><strong>الطريقة:</strong> ${mt}</div>
+                        ${p.notes ? `<div><strong>ملاحظات:</strong> ${p.notes}</div>` : ''}
+                        <div class="date">📅 ${date}</div></div>`;
+                });
+            } else {
+                content += '<p style="text-align:center;color:rgba(255,255,255,.35);padding:20px;">لا توجد دفعات مسجلة</p>';
+            }
+            content += '</div>';
+            document.getElementById('studentDetailsContent').innerHTML = content;
+            document.getElementById('detailsModal').classList.add('active');
+        }
+
+        function buildMessage(s) {
+            const rem    = s.subscriptionPrice - s.paid;
+            const status = getPaymentStatus(s);
+            const today  = new Date().toLocaleDateString('ar-EG');
+            let statusLine = '';
+            if (status === 'paid')         statusLine = `✅ الحالة: تم سداد الاشتراك بالكامل — شكراً جزيلاً!`;
+            else if (status === 'pending') statusLine = `⚠️ الحالة: سداد جزئي — المتبقي ${rem} جنيه`;
+            else                           statusLine = `❌ الحالة: لم يتم سداد الاشتراك بعد`;
+
+            return `السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب / ${s.name}\n\nنود إعلامكم بتفاصيل اشتراك نجلكم/كريمتكم:\n\n👤 اسم الطالب: ${s.name}\n📚 الفصل: ${s.class}\n💰 سعر الاشتراك: ${s.subscriptionPrice} جنيه\n✔️ المدفوع: ${s.paid} جنيه\n🔴 المتبقي: ${rem > 0 ? rem : 0} جنيه\n${statusLine}\n\n📅 التاريخ: ${today}\n\n${rem > 0 ? 'نرجو منكم سرعة سداد المبلغ المتبقي في أقرب وقت ممكن.\n' : ''}مع خالص الشكر والتقدير 🌟`;
+        }
+
+        function showMessageModal(studentId) {
+            const s = students.find(x => x.id === studentId);
+            if (!s) return;
+            const msg = buildMessage(s);
+            document.getElementById('messagePreview').textContent = msg;
+            document.getElementById('messageText').value = msg;
+            document.getElementById('parentPhone').value = '';
+            document.getElementById('messageModal').classList.add('active');
+        }
+
+        function sendWhatsApp() {
+            const text  = document.getElementById('messageText').value.trim();
+            let phone   = document.getElementById('parentPhone').value.trim().replace(/\D/g, '');
+            if (phone.startsWith('0')) phone = '2' + phone;
+            const url = phone
+                ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function copyMessage() {
+            const text = document.getElementById('messageText').value;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('✅ تم نسخ الرسالة!');
+            }).catch(() => {
+                showAlert('تعذّر النسخ — حاول يدوياً', 'danger');
+            });
+        }
+
+        function showSetPricesModal() {
+            let html = '<div style="max-height:400px;overflow-y:auto;">';
+            students.forEach(s => {
+                html += `<div class="form-group">
+                    <label>${s.name} (${s.class})</label>
+                    <input type="number" id="price_${s.id}" value="${s.subscriptionPrice}" min="0">
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('pricesList').innerHTML = html;
+            document.getElementById('setPricesModal').classList.add('active');
+        }
+
+        function applyBulkPrice() {
+            const p = document.getElementById('bulkPrice').value;
+            if (!p || p <= 0) { showAlert('يرجى إدخال سعر صحيح!', 'danger'); return; }
+            students.forEach(s => {
+                const inp = document.getElementById(`price_${s.id}`);
+                if (inp) inp.value = p;
+            });
+            showAlert('تم تطبيق السعر الموحد على جميع الطلاب!');
+        }
+
+        function savePrices() {
+            let hasError = false;
+            students.forEach(s => {
+                const price = parseInt(document.getElementById(`price_${s.id}`)?.value);
+                if (!price || price < 0) { hasError = true; return; }
+                if (!paymentsData[s.id]) paymentsData[s.id] = { paid: 0, history: [] };
+                paymentsData[s.id].subscriptionPrice = price;
+            });
+            if (hasError) { showAlert('يرجى إدخال أسعار صحيحة لجميع الطلاب!', 'danger'); return; }
+            savePayments();
+            showAlert('تم حفظ أسعار الاشتراكات بنجاح! ✓');
+            closeModal('setPricesModal');
+            buildStudentsList();
+            renderStudents();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) event.target.classList.remove('active');
+        };
+
+        window.showPaymentModal   = showPaymentModal;
+        window.processPayment     = processPayment;
+        window.showStudentDetails = showStudentDetails;
+        window.showSetPricesModal = showSetPricesModal;
+        window.applyBulkPrice     = applyBulkPrice;
+        window.savePrices         = savePrices;
+        window.filterStudents     = filterStudents;
+        window.closeModal         = closeModal;
+        window.showMessageModal   = showMessageModal;
+        window.sendWhatsApp       = sendWhatsApp;
+        window.copyMessage        = copyMessage;
+
+        setFbStatus('connecting', '🔌 جاري الاتصال بـ Firebase...');
+        migrateIfNeeded().then(() => startListeners());
+    </script>
+</body>
+</html>
